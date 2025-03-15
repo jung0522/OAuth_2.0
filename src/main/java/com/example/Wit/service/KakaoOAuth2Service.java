@@ -30,6 +30,16 @@ public class KakaoOAuth2Service {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    // 클라이언트 ID 반환
+    public String getClientId() {
+        return clientId;
+    }
+
+    // 리다이렉트 URI 반환
+    public String getRedirectUri() {
+        return redirectUri;
+    }
+
     public String getAccessToken(String authorizationCode) {
         RestTemplate restTemplate = new RestTemplate();
 

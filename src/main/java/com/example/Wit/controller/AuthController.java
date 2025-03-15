@@ -5,6 +5,7 @@ import com.example.Wit.entity.User;
 import com.example.Wit.repository.UserRepository;
 import com.example.Wit.service.KakaoOAuth2Service;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.Optional;
 
@@ -20,6 +21,16 @@ public class AuthController {
         this.userRepository = userRepository;
     }
 
+    // 카카오 로그인 페이지로 리다이렉트
+    @GetMapping("/kakao")
+    public RedirectView redirectToKakao() {
+        String kakaoLoginUrl = "https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=" +
+                kakaoOAuth2Service.getClientId() +
+                "&redirect_uri=" + kakaoOAuth2Service.getRedirectUri();
+        return new RedirectView(kakaoLoginUrl);
+    }
+
+    // 카카오 로그인 성공 후 callback 처리
     @GetMapping("/kakao/callback")
     public String kakaoLogin(@RequestParam("code") String code) {
         String accessToken = kakaoOAuth2Service.getAccessToken(code);
@@ -44,6 +55,7 @@ public class AuthController {
         return "로그인 성공: " + kakaoUserInfo.getNickname();
     }
 
+    // 사용자 정보 반환 (테스트용)
     @GetMapping("/user")
     public KakaoUserInfoDto getUserInfo(@RequestHeader("Authorization") String token) {
         if (!token.startsWith("Bearer ")) {
