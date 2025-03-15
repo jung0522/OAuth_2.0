@@ -22,18 +22,34 @@ public class AuthController {
 
     @GetMapping("/kakao/callback")
     public String kakaoLogin(@RequestParam("code") String code) {
-        // 🔹 1️⃣ 액세스 토큰 발급
         String accessToken = kakaoOAuth2Service.getAccessToken(code);
-
-        // 🔹 2️⃣ 카카오 사용자 정보 가져오기
         KakaoUserInfoDto kakaoUserInfo = kakaoOAuth2Service.getKakaoUserInfo(accessToken);
 
-        // 🔹 3️⃣ DB에 유저 저장
-        Optional<User> user = userRepository.findByEmail(kakaoUserInfo.getEmail());
-        if (user.isEmpty()) {
-            userRepository.save(new User(kakaoUserInfo.getEmail(), kakaoUserInfo.getNickname()));
+        Optional<User> optionalUser = userRepository.findByEmail(kakaoUserInfo.getEmail());
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            // 닉네임과 프로필 이미지가 변경되었으면 업데이트
+            if (!user.getNickname().equals(kakaoUserInfo.getNickname()) ||
+                    !user.getProfileImage().equals(kakaoUserInfo.getProfileImage())) {
+                user.setNickname(kakaoUserInfo.getNickname());
+                user.setProfileImage(kakaoUserInfo.getProfileImage());  // 프로필 이미지 업데이트
+                userRepository.save(user);
+            }
+        } else {
+            // 새로운 사용자라면 프로필 이미지도 함께 저장
+            userRepository.save(new User(kakaoUserInfo.getEmail(), kakaoUserInfo.getNickname(), kakaoUserInfo.getProfileImage()));
         }
 
         return "로그인 성공: " + kakaoUserInfo.getNickname();
+    }
+
+    @GetMapping("/user")
+    public KakaoUserInfoDto getUserInfo(@RequestHeader("Authorization") String token) {
+        if (!token.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Invalid token format");
+        }
+        String accessToken = token.substring(7);
+        return kakaoOAuth2Service.getKakaoUserInfo(accessToken);
     }
 }
