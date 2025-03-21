@@ -14,6 +14,9 @@ public class JwtTokenService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    private final long expirationTime = 1000 * 60 * 60 * 24; // 1 day
+
+    // 토큰에서 userId 추출
     public Long getUserIdFromToken(String token) {
         if (!token.startsWith("Bearer ")) {
             throw new IllegalArgumentException("잘못된 토큰 형식입니다.");
@@ -27,4 +30,5 @@ public class JwtTokenService {
 
         return claims.get("userId", Long.class);
     }
+
 }

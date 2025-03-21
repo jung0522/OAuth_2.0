@@ -3,7 +3,9 @@ package com.example.Wit.controller;
 import com.example.Wit.dto.KakaoUserInfoDto;
 import com.example.Wit.entity.User;
 import com.example.Wit.repository.UserRepository;
+import com.example.Wit.service.JwtTokenService;
 import com.example.Wit.service.KakaoOAuth2Service;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -15,10 +17,12 @@ public class AuthController {
 
     private final KakaoOAuth2Service kakaoOAuth2Service;
     private final UserRepository userRepository;
+    private final JwtTokenService jwtTokenService;
 
-    public AuthController(KakaoOAuth2Service kakaoOAuth2Service, UserRepository userRepository) {
+    public AuthController(KakaoOAuth2Service kakaoOAuth2Service, UserRepository userRepository, JwtTokenService jwtTokenService) {
         this.kakaoOAuth2Service = kakaoOAuth2Service;
         this.userRepository = userRepository;
+        this.jwtTokenService = jwtTokenService;
     }
 
     // 카카오 로그인 페이지로 리다이렉트
@@ -32,7 +36,7 @@ public class AuthController {
 
     // 카카오 로그인 성공 후 callback 처리
     @GetMapping("/kakao/callback")
-    public String kakaoLogin(@RequestParam("code") String code) {
+    public ResponseEntity<String> kakaoLogin(@RequestParam("code") String code) {
         String accessToken = kakaoOAuth2Service.getAccessToken(code);
         KakaoUserInfoDto kakaoUserInfo = kakaoOAuth2Service.getKakaoUserInfo(accessToken);
 
@@ -52,8 +56,10 @@ public class AuthController {
             userRepository.save(new User(kakaoUserInfo.getEmail(), kakaoUserInfo.getNickname(), kakaoUserInfo.getProfileImage()));
         }
 
-        return "로그인 성공: " + kakaoUserInfo.getNickname();
+
+        return ResponseEntity.ok("로그인 성공: " + kakaoUserInfo.getNickname() + ", accessToken: " + accessToken);
     }
+
 
     // 사용자 정보 반환 (테스트용)
     @GetMapping("/user")
